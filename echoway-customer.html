@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EchoWay — Book Your Ride</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<!-- Google Identity Services -->
+<script src="https://accounts.google.com/gsi/client" async></script>
+<style>
+:root {
+  --g: #00FFB2;
+  --g2: #00C98A;
+  --amber: #FFB800;
+  --red: #FF4757;
+  --bg: #080F17;
+  --bg2: #0D1822;
+  --bg3: #142030;
+  --card: rgba(255,255,255,0.04);
+  --border: rgba(0,255,178,0.15);
+  --text: #F0F4FF;
+  --muted: #6B7A8D;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse at 20% 10%,rgba(0,255,178,0.06) 0%,transparent 50%),radial-gradient(ellipse at 80% 80%,rgba(255,184,0,0.04) 0%,transparent 50%);pointer-events:none;z-index:0;}
+
+/* HEADER */
+.header{position:sticky;top:0;z-index:100;padding:16px 20px;background:rgba(8,15,23,0.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-mark{width:38px;height:38px;background:linear-gradient(135deg,var(--g),var(--amber));border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:18px;color:#080F17;}
+.logo-text{font-family:'Syne',sans-serif;font-weight:800;font-size:22px;background:linear-gradient(90deg,var(--g),var(--amber));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.user-chip{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--border);border-radius:40px;padding:6px 14px 6px 6px;cursor:pointer;}
+.user-chip img{width:30px;height:30px;border-radius:50%;object-fit:cover;}
+.user-chip span{font-size:13px;font-weight:500;}
+
+/* MAIN */
+.main{max-width:480px;margin:0 auto;padding:0 16px 100px;}
+
+/* LOGIN */
+.login-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:calc(100vh - 70px);text-align:center;padding:40px 20px;}
+.login-hero{font-size:72px;margin-bottom:20px;animation:float 3s ease-in-out infinite;}
+@keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-12px);}}
+.login-title{font-family:'Syne',sans-serif;font-size:32px;font-weight:800;margin-bottom:12px;line-height:1.2;}
+.login-title span{background:linear-gradient(90deg,var(--g),var(--amber));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.login-sub{color:var(--muted);font-size:15px;margin-bottom:40px;max-width:300px;}
+.google-btn{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;max-width:320px;padding:16px 24px;background:white;color:#1a1a2e;border:none;border-radius:14px;font-size:16px;font-weight:600;cursor:pointer;box-shadow:0 8px 32px rgba(0,0,0,0.4);transition:all 0.3s;}
+.google-btn:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(0,0,0,0.5);}
+.google-btn svg{width:24px;height:24px;}
+
+/* DRIVER STATUS BAR */
+.status-bar{margin:20px 0;background:var(--bg2);border-radius:16px;padding:18px;border:1px solid var(--border);display:flex;align-items:center;gap:16px;}
+.pulse-dot{width:12px;height:12px;border-radius:50%;background:var(--g);flex-shrink:0;box-shadow:0 0 0 0 rgba(0,255,178,0.5);animation:ping 2s infinite;}
+@keyframes ping{0%{box-shadow:0 0 0 0 rgba(0,255,178,0.5);}70%{box-shadow:0 0 0 10px rgba(0,255,178,0);}100%{box-shadow:0 0 0 0 rgba(0,255,178,0);}}
+.pulse-dot.red{background:var(--red);box-shadow:0 0 0 0 rgba(255,71,87,0.5);animation:ping-red 2s infinite;}
+@keyframes ping-red{0%{box-shadow:0 0 0 0 rgba(255,71,87,0.5);}70%{box-shadow:0 0 0 10px rgba(255,71,87,0);}100%{box-shadow:0 0 0 0 rgba(255,71,87,0);}}
+.status-info{flex:1;}
+.status-count{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--g);}
+.status-label{font-size:13px;color:var(--muted);}
+.eta-chip{background:rgba(0,255,178,0.1);border:1px solid rgba(0,255,178,0.2);border-radius:8px;padding:6px 12px;text-align:center;}
+.eta-val{font-size:18px;font-weight:700;color:var(--g);}
+.eta-lbl{font-size:11px;color:var(--muted);}
+
+/* FORM */
+.section-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:24px 0 12px;}
+.input-group{position:relative;margin-bottom:12px;}
+.input-icon{position:absolute;left:16px;top:50%;transform:translateY(-50%);font-size:18px;z-index:2;}
+.input-field{width:100%;padding:16px 16px 16px 50px;background:var(--bg2);border:1.5px solid var(--border);border-radius:14px;color:var(--text);font-size:15px;font-family:'DM Sans',sans-serif;outline:none;transition:all 0.25s;}
+.input-field:focus{border-color:var(--g);background:var(--bg3);box-shadow:0 0 0 4px rgba(0,255,178,0.08);}
+.input-field::placeholder{color:var(--muted);}
+
+/* RIDE TYPE CARDS */
+.ride-grid{display:grid;gap:10px;margin-bottom:4px;}
+.ride-card{background:var(--bg2);border:1.5px solid var(--border);border-radius:16px;padding:16px;cursor:pointer;transition:all 0.25s;position:relative;overflow:hidden;}
+.ride-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--g),var(--amber));transform:scaleX(0);transition:transform 0.3s;}
+.ride-card.active{border-color:var(--g);background:rgba(0,255,178,0.06);}
+.ride-card.active::before{transform:scaleX(1);}
+.ride-card:hover{border-color:rgba(0,255,178,0.4);}
+.rc-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
+.rc-icon{font-size:36px;}
+.rc-price{text-align:right;}
+.rc-price-val{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--amber);}
+.rc-price-sub{font-size:11px;color:var(--muted);}
+.rc-name{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:4px;}
+.rc-desc{font-size:12px;color:var(--muted);margin-bottom:10px;}
+.rc-tags{display:flex;flex-wrap:wrap;gap:6px;}
+.tag{background:rgba(0,255,178,0.08);border:1px solid rgba(0,255,178,0.15);border-radius:6px;padding:3px 9px;font-size:11px;color:var(--g);}
+
+/* FARE BREAKDOWN */
+.fare-card{background:var(--bg2);border:1.5px solid var(--border);border-radius:16px;padding:20px;margin:16px 0;}
+.fare-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+.fare-row:last-child{border-bottom:none;padding-top:14px;margin-top:4px;}
+.fare-label{font-size:14px;color:var(--muted);}
+.fare-value{font-size:14px;font-weight:600;}
+.fare-total .fare-label{font-size:16px;font-weight:700;color:var(--text);}
+.fare-total .fare-value{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--g);}
+
+/* BOOK BTN */
+.book-btn{width:100%;padding:20px;background:linear-gradient(135deg,var(--g),var(--g2));color:#080F17;border:none;border-radius:16px;font-family:'Syne',sans-serif;font-size:18px;font-weight:800;cursor:pointer;letter-spacing:0.5px;box-shadow:0 8px 32px rgba(0,255,178,0.25);transition:all 0.3s;position:relative;overflow:hidden;}
+.book-btn:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(0,255,178,0.35);}
+.book-btn:disabled{background:#1e2d3d;color:var(--muted);cursor:not-allowed;box-shadow:none;transform:none;}
+.book-btn .btn-sub{font-size:13px;font-weight:400;opacity:0.7;display:block;margin-top:3px;}
+
+/* MODALS */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);z-index:200;align-items:flex-end;justify-content:center;}
+.overlay.show{display:flex;}
+.sheet{background:var(--bg2);border-radius:28px 28px 0 0;padding:32px 24px 48px;width:100%;max-width:480px;border-top:1px solid var(--border);animation:slideUp 0.35s cubic-bezier(0.32,0.72,0,1);}
+@keyframes slideUp{from{transform:translateY(100%);opacity:0;}to{transform:translateY(0);opacity:1;}}
+.sheet-handle{width:40px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:0 auto 24px;}
+.sheet-icon{font-size:56px;text-align:center;margin-bottom:16px;}
+.sheet-title{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;text-align:center;margin-bottom:8px;}
+.sheet-sub{font-size:14px;color:var(--muted);text-align:center;margin-bottom:24px;}
+
+/* OTP BOX */
+.otp-box{background:var(--bg3);border:2px dashed var(--g);border-radius:16px;padding:24px;text-align:center;margin:20px 0;}
+.otp-label{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:12px;}
+.otp-digits{font-family:'Syne',sans-serif;font-size:52px;font-weight:800;color:var(--g);letter-spacing:16px;}
+.otp-hint{font-size:12px;color:var(--muted);margin-top:12px;}
+.otp-gen-btn{width:100%;padding:18px;background:linear-gradient(135deg,var(--amber),#ff9500);color:#080F17;border:none;border-radius:14px;font-family:'Syne',sans-serif;font-size:17px;font-weight:800;cursor:pointer;box-shadow:0 6px 24px rgba(255,184,0,0.3);margin:16px 0;}
+
+/* DRIVER CARD */
+.driver-tile{background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:18px;margin:16px 0;}
+.driver-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;}
+.dr-label{font-size:12px;color:var(--muted);}
+.dr-value{font-size:14px;font-weight:600;}
+.call-btn{width:100%;padding:16px;background:rgba(0,255,178,0.1);border:1.5px solid var(--g);color:var(--g);border-radius:14px;font-family:'Syne',sans-serif;font-size:16px;font-weight:700;cursor:pointer;margin:12px 0;transition:all 0.25s;}
+.call-btn:hover{background:rgba(0,255,178,0.2);}
+
+/* TRACKING */
+.tracking-pill{background:rgba(0,255,178,0.1);border:1px solid rgba(0,255,178,0.2);border-radius:12px;padding:16px;margin:16px 0;display:flex;align-items:center;gap:14px;}
+.tracking-icon{font-size:32px;}
+.tracking-text{font-size:14px;font-weight:600;color:var(--g);}
+.tracking-sub{font-size:12px;color:var(--muted);}
+
+/* STARS */
+.stars-row{display:flex;justify-content:center;gap:12px;margin:20px 0;}
+.star-btn{font-size:44px;cursor:pointer;transition:all 0.2s;filter:grayscale(1)opacity(0.4);}
+.star-btn.lit{filter:none;transform:scale(1.2);}
+
+/* STATUS STEPS */
+.steps{display:flex;flex-direction:column;gap:12px;margin:20px 0;}
+.step{display:flex;align-items:center;gap:14px;padding:14px;background:var(--bg3);border-radius:12px;}
+.step.done{border:1px solid rgba(0,255,178,0.2);}
+.step.active{border:1px solid var(--g);background:rgba(0,255,178,0.06);}
+.step-num{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;}
+.step.done .step-num{background:var(--g);color:#080F17;}
+.step.active .step-num{background:rgba(0,255,178,0.2);color:var(--g);border:2px solid var(--g);}
+.step.pending .step-num{background:rgba(255,255,255,0.06);color:var(--muted);}
+.step-info h4{font-size:14px;font-weight:600;margin-bottom:2px;}
+.step-info p{font-size:12px;color:var(--muted);}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">
+    <div class="logo-mark">E</div>
+    <span class="logo-text">EchoWay</span>
+  </div>
+  <div id="headerRight"></div>
+</div>
+
+<!-- LOGIN SCREEN -->
+<div id="loginScreen" class="main">
+  <div class="login-screen">
+    <div class="login-hero">🛺</div>
+    <h1 class="login-title">Ride Smart,<br><span>Ride Green</span></h1>
+    <p class="login-sub">Affordable e-rickshaw rides at your fingertips. Sign in with Google to get started.</p>
+
+    <!-- Google renders its real button here -->
+    <div id="googleBtnMount" style="margin-bottom:20px;min-height:50px;display:flex;align-items:center;justify-content:center;"></div>
+
+    <!-- Fallback manual login shown when Google SDK unavailable / no client ID -->
+    <div id="manualLoginFallback" style="display:none;width:100%;max-width:340px;">
+      <div style="background:rgba(255,184,0,0.1);border:1px solid rgba(255,184,0,0.3);border-radius:10px;padding:12px 16px;margin-bottom:20px;font-size:13px;color:#FFB800;">
+        ⚠️ Google Sign-In requires a Client ID configured on a hosted domain. Enter your Google account details below to simulate sign-in for testing.
+      </div>
+      <input id="manualName" placeholder="Your full name" style="width:100%;padding:14px;margin-bottom:10px;background:var(--bg2);border:1.5px solid var(--border);border-radius:12px;color:var(--text);font-size:15px;font-family:'DM Sans',sans-serif;outline:none;">
+      <input id="manualEmail" placeholder="your@gmail.com" type="email" style="width:100%;padding:14px;margin-bottom:16px;background:var(--bg2);border:1.5px solid var(--border);border-radius:12px;color:var(--text);font-size:15px;font-family:'DM Sans',sans-serif;outline:none;">
+      <button class="google-btn" onclick="manualSignIn()">
+        <svg viewBox="0 0 48 48" width="22" height="22"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.2l6.7-6.7C35.8 2.5 30.2 0 24 0 14.6 0 6.6 5.6 2.7 13.7l7.9 6.1C12.5 13.5 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4 6.9-10 6.9-17z"/><path fill="#FBBC05" d="M10.6 28.4A14.6 14.6 0 0 1 9.5 24c0-1.5.3-3 .7-4.4l-7.9-6.1A24 24 0 0 0 0 24c0 3.9.9 7.5 2.6 10.8l8-6.4z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.8 2.2-8.4 2.2-6.2 0-11.5-4-13.4-9.5l-8 6.2C6.6 42.5 14.6 48 24 48z"/></svg>
+        Sign in with Google
+      </button>
+    </div>
+
+    <p style="font-size:12px;color:var(--muted);margin-top:24px;max-width:280px;line-height:1.6;">
+      By signing in you agree to EchoWay's Terms & Privacy Policy
+    </p>
+  </div>
+</div>
+
+<!-- BOOKING SCREEN -->
+<div id="bookingScreen" class="main" style="display:none;">
+  <div style="height:20px;"></div>
+
+  <!-- Driver Status -->
+  <div class="status-bar">
+    <div class="pulse-dot" id="statusDot"></div>
+    <div class="status-info">
+      <div class="status-count" id="driverCount">0</div>
+      <div class="status-label" id="driverLabel">Checking drivers...</div>
+    </div>
+    <div class="eta-chip">
+      <div class="eta-val">~2</div>
+      <div class="eta-lbl">min wait</div>
+    </div>
+  </div>
+
+  <!-- Locations -->
+  <div class="section-title">Where are you going?</div>
+  <div class="input-group">
+    <span class="input-icon">📍</span>
+    <input class="input-field" id="pickup" placeholder="Pickup location" oninput="calcFare()">
+  </div>
+  <div class="input-group">
+    <span class="input-icon">🎯</span>
+    <input class="input-field" id="drop" placeholder="Destination" oninput="calcFare()">
+  </div>
+  <div class="input-group">
+    <span class="input-icon">📱</span>
+    <input class="input-field" id="phone" placeholder="+91 phone number">
+  </div>
+
+  <!-- Ride Types -->
+  <div class="section-title">Choose ride type</div>
+  <div class="ride-grid">
+    <div class="ride-card active" id="rt-shared" onclick="setRide('shared')">
+      <div class="rc-top">
+        <div class="rc-icon">👥</div>
+        <div class="rc-price"><div class="rc-price-val">₹8–20</div><div class="rc-price-sub">per person</div></div>
+      </div>
+      <div class="rc-name">Shared Ride</div>
+      <div class="rc-desc">Travel with others, save more</div>
+      <div class="rc-tags"><span class="tag">Cheapest</span><span class="tag">Eco-friendly</span><span class="tag">1–3 people</span></div>
+    </div>
+    <div class="ride-card" id="rt-private" onclick="setRide('private')">
+      <div class="rc-top">
+        <div class="rc-icon">🛺</div>
+        <div class="rc-price"><div class="rc-price-val">₹15–35</div><div class="rc-price-sub">flat fare</div></div>
+      </div>
+      <div class="rc-name">Private Ride</div>
+      <div class="rc-desc">Just you, direct route</div>
+      <div class="rc-tags"><span class="tag">Fast</span><span class="tag">Private</span><span class="tag">No stops</span></div>
+    </div>
+    <div class="ride-card" id="rt-family" onclick="setRide('family')">
+      <div class="rc-top">
+        <div class="rc-icon">👨‍👩‍👧‍👦</div>
+        <div class="rc-price"><div class="rc-price-val">₹20–45</div><div class="rc-price-sub">group fare</div></div>
+      </div>
+      <div class="rc-name">Family Ride</div>
+      <div class="rc-desc">Up to 5 people + luggage</div>
+      <div class="rc-tags"><span class="tag">Best value</span><span class="tag">Extra space</span><span class="tag">Child-safe</span></div>
+    </div>
+  </div>
+
+  <!-- Fare -->
+  <div class="fare-card">
+    <div class="fare-row"><span class="fare-label">Base fare</span><span class="fare-value" id="fareBase">₹15</span></div>
+    <div class="fare-row"><span class="fare-label">Distance charge</span><span class="fare-value" id="fareDist">₹0</span></div>
+    <div class="fare-row fare-total"><span class="fare-label">Total</span><span class="fare-value" id="fareTotal">₹15</span></div>
+  </div>
+
+  <button class="book-btn" id="bookBtn" onclick="bookRide()">
+    Book Ride
+    <span class="btn-sub" id="bookSub">Enter locations to continue</span>
+  </button>
+  <div style="height:20px;"></div>
+</div>
+
+<!-- WAITING OVERLAY -->
+<div class="overlay" id="waitingOverlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-icon">⏳</div>
+    <h2 class="sheet-title">Finding You a Driver</h2>
+    <p class="sheet-sub">Broadcasting to all online drivers. First to accept wins!</p>
+    <div class="steps">
+      <div class="step active"><div class="step-num">1</div><div class="step-info"><h4>Ride requested</h4><p>Sent to all nearby drivers</p></div></div>
+      <div class="step pending"><div class="step-num">2</div><div class="step-info"><h4>Driver accepting...</h4><p>Waiting for confirmation</p></div></div>
+      <div class="step pending"><div class="step-num">3</div><div class="step-info"><h4>Driver on the way</h4><p>Navigation begins</p></div></div>
+    </div>
+    <button style="width:100%;padding:16px;background:rgba(255,71,87,0.15);border:1px solid var(--red);color:var(--red);border-radius:14px;font-size:15px;font-weight:600;cursor:pointer;" onclick="cancelRide()">Cancel Request</button>
+  </div>
+</div>
+
+<!-- RIDE ACTIVE OVERLAY -->
+<div class="overlay" id="rideOverlay">
+  <div class="sheet" style="overflow-y:auto;max-height:90vh;">
+    <div class="sheet-handle"></div>
+    <div id="rideOverlayContent"></div>
+  </div>
+</div>
+
+<!-- RATING OVERLAY -->
+<div class="overlay" id="ratingOverlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-icon">🎉</div>
+    <h2 class="sheet-title">Ride Complete!</h2>
+    <p class="sheet-sub">How was your experience with <span id="rateDriverName">your driver</span>?</p>
+    <div class="stars-row" id="starsRow">
+      <span class="star-btn" onclick="setRating(1)">★</span>
+      <span class="star-btn" onclick="setRating(2)">★</span>
+      <span class="star-btn" onclick="setRating(3)">★</span>
+      <span class="star-btn" onclick="setRating(4)">★</span>
+      <span class="star-btn" onclick="setRating(5)">★</span>
+    </div>
+    <div id="ratingText" style="text-align:center;font-size:15px;color:var(--muted);margin-bottom:24px;">Tap to rate</div>
+    <button class="book-btn" onclick="submitRating()">Submit Rating</button>
+  </div>
+</div>
+
+<script>
+const FARES = {
+  shared: {base:8,per:2.5,label:'Shared'},
+  private:{base:15,per:4,label:'Private'},
+  family: {base:20,per:5,label:'Family'}
+};
+
+let state = {
+  user: null,
+  rideType: 'shared',
+  rideId: null,
+  driverPhone: null,
+  currentRating: 0,
+  phase: 'idle' // idle|waiting|accepted|navigating|arrived|started|dropoff|payment|done
+};
+
+// ─── GOOGLE AUTH ─────────────────────────────────────
+// YOUR_GOOGLE_CLIENT_ID: Replace with your actual OAuth Client ID from
+// https://console.cloud.google.com → APIs & Services → Credentials
+// Must also add your domain to Authorised JavaScript Origins
+const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com';
+
+function initGoogleSignIn() {
+  if (typeof google === 'undefined' || !google.accounts) {
+    // SDK not loaded (no internet / blocked) — show manual fallback
+    showFallback();
+    return;
+  }
+  if (GOOGLE_CLIENT_ID.includes('YOUR_GOOGLE_CLIENT_ID')) {
+    // No Client ID configured — show fallback with explanation
+    showFallback();
+    return;
+  }
+  try {
+    google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: onGoogleCredential,
+      auto_select: false,
+      cancel_on_tap_outside: true
+    });
+    google.accounts.id.renderButton(
+      document.getElementById('googleBtnMount'),
+      { theme: 'filled_blue', size: 'large', text: 'signin_with', width: 300, shape: 'rectangular' }
+    );
+  } catch(e) {
+    showFallback();
+  }
+}
+
+function showFallback() {
+  document.getElementById('googleBtnMount').style.display = 'none';
+  document.getElementById('manualLoginFallback').style.display = 'block';
+}
+
+function onGoogleCredential(response) {
+  try {
+    // Decode the JWT credential returned by Google
+    const base64Url = response.credential.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const payload = JSON.parse(decodeURIComponent(
+      atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')
+    ));
+    state.user = {
+      name: payload.name,
+      email: payload.email,
+      picture: payload.picture,
+      sub: payload.sub
+    };
+    showBookingScreen();
+  } catch(e) {
+    alert('Sign-in failed. Please try again.');
+  }
+}
+
+// Fallback: manual name/email entry for local testing
+function manualSignIn() {
+  const name = document.getElementById('manualName').value.trim();
+  const email = document.getElementById('manualEmail').value.trim();
+  if (!name || !email) { alert('Please enter your name and email'); return; }
+  if (!email.includes('@')) { alert('Please enter a valid email address'); return; }
+  state.user = {
+    name: name,
+    email: email,
+    picture: null,
+    sub: 'manual_' + Date.now()
+  };
+  showBookingScreen();
+}
+
+function showBookingScreen() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('bookingScreen').style.display = 'block';
+  const initials = state.user.name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+  const avatarSrc = state.user.picture
+    ? `<img src="${state.user.picture}" style="width:30px;height:30px;border-radius:50%;object-fit:cover;">`
+    : `<div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--g),var(--amber));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#080F17;">${initials}</div>`;
+  document.getElementById('headerRight').innerHTML = `
+    <div class="user-chip" onclick="signOut()">
+      ${avatarSrc}
+      <span>${state.user.name.split(' ')[0]}</span>
+    </div>`;
+  document.getElementById('phone').value = '';
+  pollDrivers();
+}
+
+function signOut() {
+  if (!confirm('Sign out?')) return;
+  state.user = null;
+  document.getElementById('loginScreen').style.display = 'block';
+  document.getElementById('bookingScreen').style.display = 'none';
+  document.getElementById('headerRight').innerHTML = '';
+  // Re-render Google button if SDK available
+  setTimeout(initGoogleSignIn, 100);
+}
+
+// Init Google SDK once it's loaded
+window.addEventListener('load', () => {
+  // Give the async script a moment to load
+  setTimeout(initGoogleSignIn, 500);
+});
+
+// ─── DRIVER POLLING ───────────────────────────────────
+function pollDrivers() {
+  updateDriverStatus();
+  setInterval(updateDriverStatus, 3000);
+  setInterval(pollRideUpdates, 1500);
+}
+
+function updateDriverStatus() {
+  const raw = localStorage.getItem('onlineDrivers');
+  const drivers = raw ? JSON.parse(raw).filter(d => Date.now() - d.ts < 30000) : [];
+  const count = drivers.length;
+  const dot = document.getElementById('statusDot');
+  const cnt = document.getElementById('driverCount');
+  const lbl = document.getElementById('driverLabel');
+  if (cnt) cnt.textContent = count;
+  if (lbl) lbl.textContent = count > 0 ? `Driver${count>1?'s':''} available nearby` : 'No drivers online right now';
+  if (dot) { dot.className = 'pulse-dot' + (count === 0 ? ' red' : ''); }
+  const btn = document.getElementById('bookBtn');
+  if (btn) btn.disabled = count === 0 || !document.getElementById('pickup')?.value || !document.getElementById('drop')?.value;
+}
+
+// ─── FARE CALC ────────────────────────────────────────
+function setRide(type) {
+  state.rideType = type;
+  document.querySelectorAll('.ride-card').forEach(c => c.classList.remove('active'));
+  document.getElementById('rt-' + type).classList.add('active');
+  calcFare();
+}
+
+function calcFare() {
+  const p = document.getElementById('pickup')?.value || '';
+  const d = document.getElementById('drop')?.value || '';
+  const f = FARES[state.rideType];
+  const km = p && d ? (Math.abs(p.length - d.length) % 5) + 1.5 : 0;
+  const dist = Math.round(km * f.per);
+  const total = f.base + dist;
+  document.getElementById('fareBase').textContent = `₹${f.base}`;
+  document.getElementById('fareDist').textContent = p && d ? `₹${dist}` : '₹0';
+  document.getElementById('fareTotal').textContent = p && d ? `₹${total}` : `₹${f.base}`;
+  const btn = document.getElementById('bookBtn');
+  const sub = document.getElementById('bookSub');
+  if (p && d) {
+    btn.disabled = false;
+    if (sub) sub.textContent = `${f.label} • ${km.toFixed(1)} km • ₹${total}`;
+  } else {
+    btn.disabled = true;
+    if (sub) sub.textContent = 'Enter locations to continue';
+  }
+}
+
+// ─── BOOKING ──────────────────────────────────────────
+function bookRide() {
+  const pickup = document.getElementById('pickup').value;
+  const drop = document.getElementById('drop').value;
+  const phone = document.getElementById('phone').value;
+  if (!pickup || !drop) { alert('Enter pickup and drop locations'); return; }
+  if (!phone) { alert('Enter your phone number'); return; }
+
+  const f = FARES[state.rideType];
+  const km = (Math.abs(pickup.length - drop.length) % 5) + 1.5;
+  const fare = `₹${f.base + Math.round(km * f.per)}`;
+
+  const ride = {
+    rideId: Date.now(),
+    customerName: state.user.name,
+    customerEmail: state.user.email,
+    customerPicture: state.user.picture,
+    customerPhone: phone,
+    pickup, drop, fare,
+    rideType: state.rideType,
+    status: 'pending',
+    acceptedBy: null,
+    driverAtPickup: false,
+    rideStarted: false,
+    driverAtDrop: false,
+    startOTP: null,
+    endOTP: null,
+    startOTPGenerated: false,
+    endOTPGenerated: false,
+    completed: false,
+    ts: Date.now()
+  };
+
+  state.rideId = ride.rideId;
+  state.phase = 'waiting';
+  localStorage.setItem('currentRide', JSON.stringify(ride));
+  document.getElementById('waitingOverlay').classList.add('show');
+}
+
+function cancelRide() {
+  localStorage.removeItem('currentRide');
+  state.phase = 'idle';
+  state.rideId = null;
+  document.getElementById('waitingOverlay').classList.remove('show');
+}
+
+// ─── RIDE POLLING ─────────────────────────────────────
+function pollRideUpdates() {
+  if (!state.rideId) return;
+  const raw = localStorage.getItem('currentRide');
+  if (!raw) return;
+  const ride = JSON.parse(raw);
+  if (ride.rideId !== state.rideId) return;
+
+  if (ride.acceptedBy && state.phase === 'waiting') {
+    state.phase = 'accepted';
+    state.driverPhone = ride.acceptedByPhone;
+    document.getElementById('waitingOverlay').classList.remove('show');
+    showRidePhase(ride);
+  } else if (ride.driverAtPickup && state.phase === 'accepted') {
+    state.phase = 'arrived';
+    showRidePhase(ride);
+  } else if (ride.rideStarted && state.phase === 'arrived') {
+    state.phase = 'started';
+    showRidePhase(ride);
+  } else if (ride.driverAtDrop && state.phase === 'started') {
+    state.phase = 'dropoff';
+    showRidePhase(ride);
+  } else if (ride.completed && state.phase !== 'done') {
+    state.phase = 'done';
+    document.getElementById('rideOverlay').classList.remove('show');
+    document.getElementById('rateDriverName').textContent = ride.acceptedBy;
+    document.getElementById('ratingOverlay').classList.add('show');
+    state.rideId = null;
+    localStorage.removeItem('currentRide');
+  }
+}
+
+function showRidePhase(ride) {
+  const overlay = document.getElementById('rideOverlay');
+  const content = document.getElementById('rideOverlayContent');
+  overlay.classList.add('show');
+
+  const driverInfo = `
+    <div class="driver-tile">
+      <div class="driver-row"><span class="dr-label">Driver</span><span class="dr-value">${ride.acceptedBy}</span></div>
+      <div class="driver-row"><span class="dr-label">Vehicle</span><span class="dr-value">${ride.acceptedByVehicle}</span></div>
+      <div class="driver-row"><span class="dr-label">Phone</span><span class="dr-value">${ride.acceptedByPhone}</span></div>
+    </div>
+    <button class="call-btn" onclick="window.location.href='tel:${ride.acceptedByPhone}'">📞 Call Driver</button>
+  `;
+
+  if (state.phase === 'accepted') {
+    content.innerHTML = `
+      <div class="sheet-icon">🛺</div>
+      <h2 class="sheet-title">Driver Accepted!</h2>
+      <p class="sheet-sub">Heading to your pickup location</p>
+      ${driverInfo}
+      <div class="tracking-pill"><div class="tracking-icon">🗺️</div><div><div class="tracking-text">Navigating to you</div><div class="tracking-sub">Driver is on the way to ${ride.pickup}</div></div></div>
+    `;
+  } else if (state.phase === 'arrived') {
+    const otp = ride.startOTP;
+    content.innerHTML = `
+      <div class="sheet-icon">📍</div>
+      <h2 class="sheet-title">Driver Arrived!</h2>
+      <p class="sheet-sub">Generate your Start OTP to begin the ride</p>
+      ${driverInfo}
+      ${otp ? `<div class="otp-box"><div class="otp-label">Start OTP — Share with driver</div><div class="otp-digits">${otp}</div><div class="otp-hint">Tell this code to your driver to start</div></div>` : `<button class="otp-gen-btn" onclick="genStartOTP()">🔐 Generate Start OTP</button>`}
+    `;
+  } else if (state.phase === 'started') {
+    content.innerHTML = `
+      <div class="sheet-icon">🚀</div>
+      <h2 class="sheet-title">Ride in Progress</h2>
+      <p class="sheet-sub">Heading to ${ride.drop}</p>
+      ${driverInfo}
+      <div class="tracking-pill"><div class="tracking-icon">🗺️</div><div><div class="tracking-text">On the way to destination</div><div class="tracking-sub">Sit back and relax!</div></div></div>
+    `;
+  } else if (state.phase === 'dropoff') {
+    const otp = ride.endOTP;
+    content.innerHTML = `
+      <div class="sheet-icon">🏁</div>
+      <h2 class="sheet-title">You've Arrived!</h2>
+      <p class="sheet-sub">Generate your End OTP to complete the ride</p>
+      ${driverInfo}
+      ${otp ? `<div class="otp-box" style="border-color:var(--amber)"><div class="otp-label">End OTP — Share with driver</div><div class="otp-digits" style="color:var(--amber)">${otp}</div><div class="otp-hint">Tell this code to complete the ride</div></div>` : `<button class="otp-gen-btn" onclick="genEndOTP()">🏁 Generate End OTP</button>`}
+    `;
+  }
+}
+
+function genStartOTP() {
+  const otp = String(Math.floor(1000 + Math.random() * 9000));
+  const ride = JSON.parse(localStorage.getItem('currentRide'));
+  ride.startOTP = otp;
+  ride.startOTPGenerated = true;
+  localStorage.setItem('currentRide', JSON.stringify(ride));
+  showRidePhase(ride);
+}
+
+function genEndOTP() {
+  const otp = String(Math.floor(1000 + Math.random() * 9000));
+  const ride = JSON.parse(localStorage.getItem('currentRide'));
+  ride.endOTP = otp;
+  ride.endOTPGenerated = true;
+  localStorage.setItem('currentRide', JSON.stringify(ride));
+  showRidePhase(ride);
+}
+
+// ─── RATING ───────────────────────────────────────────
+function setRating(n) {
+  state.currentRating = n;
+  document.querySelectorAll('.star-btn').forEach((s,i) => s.classList.toggle('lit', i < n));
+  const labels = ['','Poor','Fair','Good','Great','Excellent! 🙌'];
+  document.getElementById('ratingText').textContent = labels[n];
+}
+
+function submitRating() {
+  if (!state.currentRating) { alert('Please select a rating'); return; }
+  document.getElementById('ratingOverlay').classList.remove('show');
+  state.currentRating = 0;
+  document.querySelectorAll('.star-btn').forEach(s => s.classList.remove('lit'));
+  document.getElementById('ratingText').textContent = 'Tap to rate';
+  document.getElementById('pickup').value = '';
+  document.getElementById('drop').value = '';
+  calcFare();
+}
+
+// pollDrivers is called from showBookingScreen after login
+</script>
+</body>
+</html>
